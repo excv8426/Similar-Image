@@ -59,13 +59,7 @@ public class ImageSearch {
 		graphics2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 		graphics2d.drawRenderedImage(image, AffineTransform.getScaleInstance(sx, sy));
 		graphics2d.dispose();
-		/*try {
-			ImageIO.write(target, "jpg", new File("C:\\新建文件夹\\"+UUID.randomUUID().toString()+".jpg"));
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
-		//System.out.println(image.getRGB(10, 10));
-		//System.out.println(target.getRGB(10, 10));
+
 		long gray_avg=0;
 		for (int i = 0; i < w; i++) {
 			for (int j = 0; j < h; j++) {
@@ -73,20 +67,16 @@ public class ImageSearch {
 			}
 		}
 		gray_avg=gray_avg/w/h;
-		//byte[][] image_hash=new byte[w][h];
 		BitSet image_hash=new BitSet();
 		for (int i = 0; i < w; i++) {
 			for (int j = 0; j < h; j++) {
 				if (gray_avg>target.getRGB(i, j)) {
-					//image_hash[i][j]=0;
 				} else {
-					//image_hash[i][j]=1;
 					image_hash.set((i+1)*(j+1));
 				}
 				
 			}
 		}
-		
 		return image_hash;
 	}
 	
