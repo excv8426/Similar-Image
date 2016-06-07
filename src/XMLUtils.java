@@ -1,88 +1,83 @@
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.BitSet;
 import java.util.Base64.Decoder;
-import java.util.Base64.Encoder;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.LinkedBlockingDeque;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 import org.dom4j.DocumentException;
 import org.dom4j.io.SAXReader;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
 
 public class XMLUtils {
 	
-	public static void createXML(String path){
-		DocumentBuilderFactory builderFactory=DocumentBuilderFactory.newInstance();
-		builderFactory.setIgnoringElementContentWhitespace(true);
-		TransformerFactory transformerFactory=TransformerFactory.newInstance();
-		Transformer transformer=null;
-		DocumentBuilder builder=null;
-		try {
-			builder=builderFactory.newDocumentBuilder();
-			transformer=transformerFactory.newTransformer();
-			Document document=builder.newDocument();
-			document.appendChild(document.createElement("root"));
-			transformer.transform(new DOMSource(document), new StreamResult(new File(path)));
-		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
-		} catch (TransformerConfigurationException e) {
-			e.printStackTrace();
-		} catch (TransformerException e) {
-			e.printStackTrace();
-		}
-	}
+	public static LinkedBlockingDeque<ImageHash> hashQueue=new LinkedBlockingDeque<>(100);
 	
-	public static void saveHash(Image[] images,String path){
-		Encoder encoder=Base64.getEncoder();
-		DocumentBuilderFactory builderFactory=DocumentBuilderFactory.newInstance();
-		builderFactory.setIgnoringElementContentWhitespace(true);
-		TransformerFactory transformerFactory=TransformerFactory.newInstance();
-		Transformer transformer=null;
-		DocumentBuilder builder=null;
-		Document document=null;
+	public static void createXML(String xmlpath){
+		File file=new File(xmlpath);
+		FileOutputStream outputStream=null;
+		XMLStreamWriter writer=null;
+		ImageHash imageHash=null;
 		try {
-			builder=builderFactory.newDocumentBuilder();
-			transformer=transformerFactory.newTransformer();
-			document=builder.parse(path);
-			Node rootnode=document.getElementsByTagName("root").item(0);
-			Element imagehash=null;
-			for (int i = 0; i < images.length; i++) {
-				imagehash=document.createElement("imagehash");
-				System.out.println(imagehash);
-				System.out.println(i);
-				System.out.println(images[i]);
-				imagehash.setAttribute("name", images[i].getName());
-				imagehash.setTextContent(encoder.encodeToString(images[i].getHash().toByteArray()));
-				rootnode.appendChild(imagehash);
+			if (!file.exists()) {
+				file.createNewFile();
 			}
-			transformer.transform(new DOMSource(document), new StreamResult(new File(path)));
-		} catch (ParserConfigurationException e) {
-			e.printStackTrace();
-		} catch (TransformerConfigurationException e) {
-			e.printStackTrace();
-		} catch (SAXException e) {
+			outputStream = new FileOutputStream(file);
+			writer=XMLOutputFactory.newInstance().createXMLStreamWriter(outputStream);
+			writer.writeStartDocument("UTF-8","1.0");
+			writer.writeEndDocument();
+			writer.writeStartElement("root");
+			while (true) {
+				imageHash=hashQueue.take();
+				if (imageHash.getHash().equals("!")) {
+					break;
+				} else {
+					writer.writeStartElement("imagehash");
+					writer.writeAttribute("id", imageHash.getName());
+					writer.writeCharacters(imageHash.getHash());
+					writer.writeEndElement();
+				}
+			}
+			writer.writeEndElement();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} catch (TransformerException e) {
+		} catch (XMLStreamException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (FactoryConfigurationError e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			try {
+				writer.flush();
+				writer.close();
+				outputStream.flush();
+				outputStream.close();
+			} catch (XMLStreamException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		}
+
 	}
 	
 	public static void readXML(String path){
@@ -117,10 +112,10 @@ public class XMLUtils {
             j=root.elementIterator();
             while (j.hasNext()) {
 				element_j = (org.dom4j.Element) j.next();
-				if (i_ix!=j_ix) {
+				if (i_ix<j_ix) {
 					difference=new ImageDifference();
-					difference.setName1(element_i.attributeValue("name"));
-					difference.setName2(element_j.attributeValue("name"));
+					difference.setName1(element_i.attributeValue("id"));
+					difference.setName2(element_j.attributeValue("id"));
 					BitSet hash2=BitSet.valueOf(decoder.decode(element_j.getText()));
 					hash2.xor(imagehash);
 					difference.setDifference(hash2.cardinality());
@@ -130,12 +125,28 @@ public class XMLUtils {
 			}
             i_ix++;
 		}
-        
+        int out=0;
         for (ImageDifference imagedifference : differences) {
+        	out++;
+        	if (out==1000000) {
+				break;
+			}
 			System.out.println(imagedifference.toString());
 		}
 
 	}
 	
+	
+	public static void queueinputEnd(){
+		ImageHash imageHash=new ImageHash();
+		imageHash.setName("");
+		imageHash.setHash("!");
+		try {
+			hashQueue.put(imageHash);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 	
 }

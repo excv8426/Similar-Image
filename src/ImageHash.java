@@ -1,8 +1,8 @@
-import java.util.BitSet;
 
-public class Image {
+
+public class ImageHash {
 	private String name;
-	private BitSet hash;
+	private String hash;
 	
 	public String getName() {
 		return name;
@@ -10,10 +10,10 @@ public class Image {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public BitSet getHash() {
+	public String getHash() {
 		return hash;
 	}
-	public void setHash(BitSet hash) {
+	public void setHash(String hash) {
 		this.hash = hash;
 	}
 }
