@@ -21,6 +21,11 @@ public class XMLUtils {
 	
 	public static LinkedBlockingDeque<ImageHash> hashQueue=new LinkedBlockingDeque<>(100);
 	
+	/**
+	 * 把hashQueue保存到XML文件。
+	 * @param xmlpath
+	 * XML文件路径，例如D:\\imagehash.xml。
+	 * */
 	public static void createXML(String xmlpath){
 		File file=new File(xmlpath);
 		FileOutputStream outputStream=null;
@@ -80,6 +85,11 @@ public class XMLUtils {
 
 	}
 	
+	/**
+	 * 遍历XML文件，比较hash值并排序输出。
+	 * @param path
+	 * XML文件路径，例如D:\\imagehash.xml
+	 * */
 	public static void readXML(String path){
 		ImageDifference difference=null;
 		Set<ImageDifference> differences=new TreeSet<>();
@@ -106,8 +116,6 @@ public class XMLUtils {
         while (i.hasNext()) {
         	j_ix=0;
         	element_i = (org.dom4j.Element) i.next();
-            /*System.out.println(element_i.attributeValue("name"));
-            System.out.println(element_i.getText());*/
             imagehash=BitSet.valueOf(decoder.decode(element_i.getText()));
             j=root.elementIterator();
             while (j.hasNext()) {
@@ -136,7 +144,10 @@ public class XMLUtils {
 
 	}
 	
-	
+	/**
+	 * 在hashQueue插入队列结束标识。
+	 * name=="" hash=="!"
+	 * */
 	public static void queueinputEnd(){
 		ImageHash imageHash=new ImageHash();
 		imageHash.setName("");

@@ -9,13 +9,15 @@ public class CalculateController implements Runnable {
 	public CalculateController(String imagepath){
 		this.imagepath=imagepath;
 	}
+	
 	@Override
 	public void run() {
 		File dir=new File(imagepath);
 		File[] files=dir.listFiles();
 		ExecutorService executorService=Executors.newFixedThreadPool(4);
+		//多线程计算hash值。
 		for (File file : files) {
-			executorService.execute(new HashCalculator(file));
+			executorService.execute(new HashCalculator(file,16,16));
 		}
 		executorService.shutdown();
 		try {
@@ -24,6 +26,7 @@ public class CalculateController implements Runnable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		//计算完毕，插入队列结束标识。
 		XMLUtils.queueinputEnd();
 	}
 
