@@ -9,7 +9,6 @@ public class SimilarImage {
 		ExecutorService executorService=Executors.newSingleThreadExecutor();
 		executorService.execute(new CalculateController(imagepath));
 		executorService.shutdown();
-		System.out.println("写入XML");
 		XMLUtils.createXML(outputpath);
 		XMLUtils.readXML(outputpath);
 	}

@@ -51,7 +51,6 @@ public class HashCalculator implements Runnable {
 		//缩小图片，颜色转换为灰度。
 		double sx=(double) w/image.getWidth();
 		double sy=(double) h/image.getHeight();
-		System.out.println(sx);
 		BufferedImage target=new BufferedImage(w, h, BufferedImage.TYPE_BYTE_GRAY);
 		Graphics2D graphics2d=target.createGraphics();
 		graphics2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
